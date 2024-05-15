@@ -31,6 +31,6 @@ func (s *APIServer) Launch() error {
 		Handler: mux,
 	}
 
-	log.Printf("Server listenign on %s\n", s.Addr)
+	log.Printf("Server listening on %s\n", s.Addr)
 	return server.ListenAndServe()
 }
