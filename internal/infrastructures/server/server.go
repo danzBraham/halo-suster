@@ -4,6 +4,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/danzBraham/halo-suster/internal/applications/services"
+	"github.com/danzBraham/halo-suster/internal/helpers"
+	user_repository_postgres "github.com/danzBraham/halo-suster/internal/infrastructures/repository/user"
+	"github.com/danzBraham/halo-suster/internal/interfaces/http/api/controllers"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,15 +26,29 @@ func NewAPIServer(addr string, db *pgxpool.Pool) *APIServer {
 }
 
 func (s *APIServer) Launch() error {
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Use(middleware.CleanPath)
+	r.Use(middleware.AllowContentType("application/json"))
+	r.Use(middleware.Recoverer)
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Welcome to Halo Suster API\n"))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
+			Message: "Welcome to Halo Suster API",
+		})
+	})
+
+	userRepository := user_repository_postgres.NewUserRepositoryPostgres(s.DB)
+	userService := services.NewUserService(userRepository)
+	userController := controllers.NewUserController(userService)
+
+	r.Route("/v1", func(r chi.Router) {
+		r.Mount("/user", userController.Routes())
 	})
 
 	server := http.Server{
 		Addr:    s.Addr,
-		Handler: mux,
+		Handler: r,
 	}
 
 	log.Printf("Server listening on %s\n", s.Addr)
