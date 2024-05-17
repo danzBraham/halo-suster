@@ -23,7 +23,7 @@ func NewUserRepositoryPostgres(db *pgxpool.Pool) user_repository.UserRepository 
 
 func (r *UserRepositoryPostgres) CreateITUser(ctx context.Context, user *user_entity.RegisterITUser) (id string, err error) {
 	id = ulid.Make().String()
-	nip := strconv.Itoa(user.Nip)
+	nip := strconv.Itoa(user.NIP)
 	query := "INSERT INTO users (id, nip, name, password, role) VALUES ($1, $2, $3, $4, $5)"
 	_, err = r.DB.Exec(ctx, query, id, nip, user.Name, user.Password, user_entity.IT)
 	if err != nil {
@@ -42,4 +42,22 @@ func (r *UserRepositoryPostgres) VerifyNIP(ctx context.Context, nip string) (id 
 		return "", err
 	}
 	return id, nil
+}
+
+func (r *UserRepositoryPostgres) GetByNIP(ctx context.Context, nip string) (user *user_entity.User, err error) {
+	user = &user_entity.User{}
+	user.NIP, err = strconv.Atoi(nip)
+	if err != nil {
+		return nil, err
+	}
+
+	query := "SELECT id, name FROM users WHERE nip = $1"
+	err = r.DB.QueryRow(ctx, query, nip).Scan(&user.ID, &user.Name)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, user_error.UserNotFoundError
+	}
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

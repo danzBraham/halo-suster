@@ -22,7 +22,7 @@ func NewUserService(userRepository user_repository.UserRepository) interfaces.Us
 }
 
 func (s *UserService) CreateITUser(ctx context.Context, user *user_entity.RegisterITUser) (*user_entity.LoggedInUser, error) {
-	id, err := s.UserRepository.VerifyNIP(ctx, strconv.Itoa(user.Nip))
+	id, err := s.UserRepository.VerifyNIP(ctx, strconv.Itoa(user.NIP))
 	if err != nil && !errors.Is(err, user_error.UserNotFoundError) {
 		return nil, err
 	}
@@ -48,7 +48,26 @@ func (s *UserService) CreateITUser(ctx context.Context, user *user_entity.Regist
 
 	return &user_entity.LoggedInUser{
 		ID:          id,
-		Nip:         user.Nip,
+		NIP:         user.NIP,
+		Name:        user.Name,
+		AccessToken: accessToken,
+	}, nil
+}
+
+func (s *UserService) UserLogin(ctx context.Context, payload *user_entity.LoginUser) (*user_entity.LoggedInUser, error) {
+	user, err := s.UserRepository.GetByNIP(ctx, strconv.Itoa(payload.NIP))
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := helpers.CreateJWT(2*time.Hour, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user_entity.LoggedInUser{
+		ID:          user.ID,
+		NIP:         user.NIP,
 		Name:        user.Name,
 		AccessToken: accessToken,
 	}, nil

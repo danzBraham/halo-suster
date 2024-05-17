@@ -7,5 +7,6 @@ import (
 )
 
 type UserService interface {
-	CreateITUser(ctx context.Context, user *user_entity.RegisterITUser) (*user_entity.LoggedInUser, error)
+	CreateITUser(ctx context.Context, payload *user_entity.RegisterITUser) (*user_entity.LoggedInUser, error)
+	UserLogin(ctx context.Context, payload *user_entity.LoginUser) (*user_entity.LoggedInUser, error)
 }
