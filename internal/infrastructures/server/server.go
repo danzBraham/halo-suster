@@ -46,6 +46,18 @@ func (s *APIServer) Launch() error {
 		r.Mount("/user", userController.Routes())
 	})
 
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Message: "Route does not exist",
+		})
+	})
+
+	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		helpers.ResponseJSON(w, http.StatusMethodNotAllowed, &helpers.ResponseBody{
+			Message: "Method is not allowed",
+		})
+	})
+
 	server := http.Server{
 		Addr:    s.Addr,
 		Handler: r,
