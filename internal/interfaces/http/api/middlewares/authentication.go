@@ -10,9 +10,14 @@ import (
 	"github.com/danzBraham/halo-suster/internal/helpers"
 )
 
-type ContextAuthKey struct{}
+type ContextKey string
 
-func Authentication(next http.Handler) http.Handler {
+var (
+	ContextUserIDKey ContextKey = "userID"
+	ContextRoleKey   ContextKey = "role"
+)
+
+func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -32,7 +37,7 @@ func Authentication(next http.Handler) http.Handler {
 			return
 		}
 
-		jwtResponse, err := helpers.VerifyJWT(tokenString)
+		credential, err := helpers.VerifyJWT(tokenString)
 		if errors.Is(err, auth_error.ErrInvalidToken) {
 			helpers.ResponseJSON(w, http.StatusUnauthorized, &helpers.ResponseBody{
 				Error:   "Unauthorized error",
@@ -48,7 +53,9 @@ func Authentication(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), ContextAuthKey{}, jwtResponse)
+		ctx := context.WithValue(r.Context(), ContextUserIDKey, credential.UserId)
+		ctx = context.WithValue(ctx, ContextRoleKey, credential.Role)
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

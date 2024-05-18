@@ -51,7 +51,38 @@ func (s *UserService) CreateITUser(ctx context.Context, payload *user_entity.Reg
 	}
 
 	return &user_entity.LoggedInUser{
-		ID:          id,
+		UserID:      id,
+		NIP:         payload.NIP,
+		Name:        payload.Name,
+		AccessToken: accessToken,
+	}, nil
+}
+
+func (s *UserService) CreateNurseUser(ctx context.Context, payload *user_entity.RegisterNurseUser) (*user_entity.LoggedInUser, error) {
+	if strconv.Itoa(payload.NIP)[:3] != "303" {
+		return nil, user_error.ErrNotNurseUserNIP
+	}
+
+	user, err := s.UserRepository.GetUserByNIP(ctx, payload.NIP)
+	if err != nil && !errors.Is(err, user_error.ErrUserNotFound) {
+		return nil, err
+	}
+	if user != nil {
+		return nil, user_error.ErrNIPAlreadyExists
+	}
+
+	userId, err := s.UserRepository.CreateNurseUser(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := helpers.CreateJWT(2*time.Hour, userId, user_entity.Nurse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user_entity.LoggedInUser{
+		UserID:      userId,
 		NIP:         payload.NIP,
 		Name:        payload.Name,
 		AccessToken: accessToken,
@@ -78,7 +109,7 @@ func (s *UserService) UserLogin(ctx context.Context, payload *user_entity.LoginU
 	}
 
 	return &user_entity.LoggedInUser{
-		ID:          user.ID,
+		UserID:      user.ID,
 		NIP:         user.NIP,
 		Name:        user.Name,
 		AccessToken: accessToken,

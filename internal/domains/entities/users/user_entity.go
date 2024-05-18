@@ -22,9 +22,9 @@ type RegisterITUser struct {
 }
 
 type RegisterNurseUser struct {
-	NIP      int    `json:"nip"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	NIP          int    `json:"nip" validate:"required,nip"`
+	Name         string `json:"name" validate:"required,min=5,max=50"`
+	CardImageURL string `json:"identityCardScanImg" validate:"url"`
 }
 
 type LoginUser struct {
@@ -33,7 +33,7 @@ type LoginUser struct {
 }
 
 type LoggedInUser struct {
-	ID          string `json:"userId"`
+	UserID      string `json:"userId"`
 	NIP         int    `json:"nip"`
 	Name        string `json:"name"`
 	AccessToken string `json:"accessToken"`

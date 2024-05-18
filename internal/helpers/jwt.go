@@ -36,12 +36,12 @@ func CreateJWT(ttl time.Duration, userId string, role user_entity.Role) (string,
 	return token.SignedString(key)
 }
 
-type JWTResponse struct {
+type Credential struct {
 	UserId string           `json:"userId"`
 	Role   user_entity.Role `json:"role"`
 }
 
-func VerifyJWT(tokenString string) (*JWTResponse, error) {
+func VerifyJWT(tokenString string) (*Credential, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
@@ -61,7 +61,7 @@ func VerifyJWT(tokenString string) (*JWTResponse, error) {
 		return nil, auth_error.ErrUnknownClaims
 	}
 
-	return &JWTResponse{
+	return &Credential{
 		UserId: claims.UserId,
 		Role:   claims.Role,
 	}, nil
