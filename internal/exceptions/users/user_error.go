@@ -3,8 +3,8 @@ package user_error
 import "errors"
 
 var (
-	ErrUserNotFound     = errors.New("User not found")
+	ErrUserNotFound     = errors.New("user not found")
 	ErrNIPAlreadyExists = errors.New("NIP already exists")
 	ErrNotITUserNIP     = errors.New("NIP not starts with 615")
-	ErrInvalidPassword  = errors.New("Invalid password")
+	ErrInvalidPassword  = errors.New("invalid password")
 )
