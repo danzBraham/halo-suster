@@ -23,19 +23,19 @@ func NewUserController(userService interfaces.UserService) *UserController {
 
 func (c *UserController) Routes() chi.Router {
 	r := chi.NewRouter()
-	r.Post("/it/register", c.handleRegister)
+	r.Post("/it/register", c.handleRegisterITUser)
 	r.Post("/it/login", c.handleLogin)
 	return r
 }
 
-func (c *UserController) handleRegister(w http.ResponseWriter, r *http.Request) {
+func (c *UserController) handleRegisterITUser(w http.ResponseWriter, r *http.Request) {
 	payload := &user_entity.RegisterITUser{}
 
 	err := helpers.DecodeJSON(r, payload)
 	if err != nil {
 		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
-			Message: "Failed to decode JSON",
 			Error:   err.Error(),
+			Message: "Failed to decode JSON",
 		})
 		return
 	}
@@ -43,24 +43,38 @@ func (c *UserController) handleRegister(w http.ResponseWriter, r *http.Request) 
 	err = helpers.ValidatePayload(payload)
 	if err != nil {
 		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
+			Error:   "Validation error",
 			Message: "Request doesn’t pass validation",
-			Error:   err.Error(),
 		})
 		return
 	}
 
 	user, err := c.Service.CreateITUser(r.Context(), payload)
-	if errors.Is(err, user_error.NIPAlreadyExistsError) {
-		helpers.ResponseJSON(w, http.StatusConflict, &helpers.ResponseBody{
+	if errors.Is(err, user_error.ErrNotITUserNIP) {
+		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
+			Error:   "Validation error",
 			Message: err.Error(),
-			Error:   err.Error(),
+		})
+		return
+	}
+	if errors.Is(err, user_error.ErrUserNotFound) {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Error:   "Not found error",
+			Message: err.Error(),
+		})
+		return
+	}
+	if errors.Is(err, user_error.ErrNIPAlreadyExists) {
+		helpers.ResponseJSON(w, http.StatusConflict, &helpers.ResponseBody{
+			Error:   "Conflict error",
+			Message: err.Error(),
 		})
 		return
 	}
 	if err != nil {
 		helpers.ResponseJSON(w, http.StatusInternalServerError, &helpers.ResponseBody{
-			Message: "Internal server error",
-			Error:   err.Error(),
+			Error:   "Internal server error",
+			Message: err.Error(),
 		})
 		return
 	}
@@ -84,8 +98,8 @@ func (c *UserController) handleLogin(w http.ResponseWriter, r *http.Request) {
 	err := helpers.DecodeJSON(r, payload)
 	if err != nil {
 		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
-			Message: "Failed to decode JSON",
 			Error:   err.Error(),
+			Message: "Failed to decode JSON",
 		})
 		return
 	}
@@ -93,24 +107,31 @@ func (c *UserController) handleLogin(w http.ResponseWriter, r *http.Request) {
 	err = helpers.ValidatePayload(payload)
 	if err != nil {
 		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
-			Message: "Request doesn’t pass validation",
 			Error:   err.Error(),
+			Message: "Request doesn’t pass validation",
 		})
 		return
 	}
 
 	user, err := c.Service.UserLogin(r.Context(), payload)
-	if errors.Is(err, user_error.UserNotFoundError) {
-		helpers.ResponseJSON(w, http.StatusConflict, &helpers.ResponseBody{
+	if errors.Is(err, user_error.ErrInvalidPassword) {
+		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
+			Error:   "Bad request error",
 			Message: err.Error(),
-			Error:   err.Error(),
+		})
+		return
+	}
+	if errors.Is(err, user_error.ErrUserNotFound) {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Error:   "Not found error",
+			Message: err.Error(),
 		})
 		return
 	}
 	if err != nil {
 		helpers.ResponseJSON(w, http.StatusInternalServerError, &helpers.ResponseBody{
-			Message: "Internal server error",
-			Error:   err.Error(),
+			Error:   "Internal server error",
+			Message: err.Error(),
 		})
 		return
 	}

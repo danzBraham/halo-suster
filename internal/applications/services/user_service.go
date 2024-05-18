@@ -21,22 +21,26 @@ func NewUserService(userRepository user_repository.UserRepository) interfaces.Us
 	return &UserService{UserRepository: userRepository}
 }
 
-func (s *UserService) CreateITUser(ctx context.Context, user *user_entity.RegisterITUser) (*user_entity.LoggedInUser, error) {
-	id, err := s.UserRepository.VerifyNIP(ctx, strconv.Itoa(user.NIP))
-	if err != nil && !errors.Is(err, user_error.UserNotFoundError) {
-		return nil, err
-	}
-	if id != "" {
-		return nil, user_error.NIPAlreadyExistsError
+func (s *UserService) CreateITUser(ctx context.Context, payload *user_entity.RegisterITUser) (*user_entity.LoggedInUser, error) {
+	if strconv.Itoa(payload.NIP)[:3] != "615" {
+		return nil, user_error.ErrNotITUserNIP
 	}
 
-	hashedPassword, err := helpers.HashPassword(user.Password)
+	user, err := s.UserRepository.GetUserByNIP(ctx, payload.NIP)
+	if err != nil && !errors.Is(err, user_error.ErrUserNotFound) {
+		return nil, err
+	}
+	if user != nil {
+		return nil, user_error.ErrNIPAlreadyExists
+	}
+
+	hashedPassword, err := helpers.HashPassword(payload.Password)
 	if err != nil {
 		return nil, err
 	}
-	user.Password = hashedPassword
+	payload.Password = hashedPassword
 
-	id, err = s.UserRepository.CreateITUser(ctx, user)
+	id, err := s.UserRepository.CreateITUser(ctx, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -48,16 +52,24 @@ func (s *UserService) CreateITUser(ctx context.Context, user *user_entity.Regist
 
 	return &user_entity.LoggedInUser{
 		ID:          id,
-		NIP:         user.NIP,
-		Name:        user.Name,
+		NIP:         payload.NIP,
+		Name:        payload.Name,
 		AccessToken: accessToken,
 	}, nil
 }
 
 func (s *UserService) UserLogin(ctx context.Context, payload *user_entity.LoginUser) (*user_entity.LoggedInUser, error) {
-	user, err := s.UserRepository.GetByNIP(ctx, strconv.Itoa(payload.NIP))
+	user, err := s.UserRepository.GetUserByNIP(ctx, payload.NIP)
 	if err != nil {
 		return nil, err
+	}
+
+	isMatch, err := helpers.MatchPassword(user.Password, payload.Password)
+	if err != nil {
+		return nil, err
+	}
+	if !isMatch {
+		return nil, user_error.ErrInvalidPassword
 	}
 
 	accessToken, err := helpers.CreateJWT(2*time.Hour, user.ID)

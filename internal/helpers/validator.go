@@ -24,12 +24,12 @@ func validateUserNIP(fl validator.FieldLevel) bool {
 	nip := fl.Field().Int()
 	nipStr := strconv.Itoa(int(nip))
 
-	if len(nipStr) != 13 {
+	if len(nipStr) < 13 || len(nipStr) > 15 {
 		return false
 	}
 
 	// Check first digits
-	if nipStr[:3] != "615" {
+	if nipStr[:3] != "615" && nipStr[:3] != "303" {
 		return false
 	}
 
@@ -53,6 +53,9 @@ func validateUserNIP(fl validator.FieldLevel) bool {
 
 	// Check random digits
 	randomDigits := nipStr[10:]
+	if len(randomDigits) < 3 || len(randomDigits) > 5 {
+		return false
+	}
 	if _, err := strconv.Atoi(randomDigits); err != nil {
 		return false
 	}

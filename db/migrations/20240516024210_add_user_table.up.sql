@@ -2,7 +2,7 @@ CREATE TYPE roles AS ENUM ('it', 'nurse');
 
 CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(26) NOT NULL PRIMARY KEY,
-  nip VARCHAR(13) NOT NULL,
+  nip BIGINT NOT NULL,
   name VARCHAR(50) NOT NULL,
   password VARCHAR(60) NULL,
   role roles NOT NULL,

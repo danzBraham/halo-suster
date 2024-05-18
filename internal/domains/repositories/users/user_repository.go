@@ -7,7 +7,6 @@ import (
 )
 
 type UserRepository interface {
-	CreateITUser(ctx context.Context, user *user_entity.RegisterITUser) (id string, err error)
-	VerifyNIP(ctx context.Context, nip string) (id string, err error)
-	GetByNIP(ctx context.Context, nip string) (user *user_entity.User, err error)
+	CreateITUser(ctx context.Context, payload *user_entity.RegisterITUser) (id string, err error)
+	GetUserByNIP(ctx context.Context, nip int) (user *user_entity.User, err error)
 }
