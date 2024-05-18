@@ -12,6 +12,7 @@ type User struct {
 	NIP      int    `json:"nip"`
 	Name     string `json:"name"`
 	Password string `json:"password"`
+	Role     Role   `json:"role"`
 }
 
 type RegisterITUser struct {

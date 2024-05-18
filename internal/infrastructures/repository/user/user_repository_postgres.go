@@ -32,8 +32,8 @@ func (r *UserRepositoryPostgres) CreateITUser(ctx context.Context, payload *user
 
 func (r *UserRepositoryPostgres) GetUserByNIP(ctx context.Context, nip int) (user *user_entity.User, err error) {
 	user = &user_entity.User{}
-	query := "SELECT id, nip, name, password FROM users WHERE nip = $1"
-	err = r.DB.QueryRow(ctx, query, nip).Scan(&user.ID, &user.NIP, &user.Name, &user.Password)
+	query := "SELECT id, nip, name, password, role FROM users WHERE nip = $1"
+	err = r.DB.QueryRow(ctx, query, nip).Scan(&user.ID, &user.NIP, &user.Name, &user.Password, &user.Role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, user_error.ErrUserNotFound
 	}

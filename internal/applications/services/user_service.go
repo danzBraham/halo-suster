@@ -45,7 +45,7 @@ func (s *UserService) CreateITUser(ctx context.Context, payload *user_entity.Reg
 		return nil, err
 	}
 
-	accessToken, err := helpers.CreateJWT(2*time.Hour, id)
+	accessToken, err := helpers.CreateJWT(2*time.Hour, id, user_entity.IT)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (s *UserService) UserLogin(ctx context.Context, payload *user_entity.LoginU
 		return nil, user_error.ErrInvalidPassword
 	}
 
-	accessToken, err := helpers.CreateJWT(2*time.Hour, user.ID)
+	accessToken, err := helpers.CreateJWT(2*time.Hour, user.ID, user.Role)
 	if err != nil {
 		return nil, err
 	}
