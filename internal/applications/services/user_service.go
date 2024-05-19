@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
-	"strconv"
 	"time"
 
 	"github.com/danzBraham/halo-suster/internal/applications/interfaces"
@@ -55,15 +53,11 @@ func (s *UserService) CreateITUser(ctx context.Context, payload *user_entity.Reg
 }
 
 func (s *UserService) CreateNurseUser(ctx context.Context, payload *user_entity.RegisterNurseUser) (*user_entity.LoggedInUser, error) {
-	if strconv.Itoa(payload.NIP)[:3] != "303" {
-		return nil, user_error.ErrUserIsNotNurse
-	}
-
-	user, err := s.UserRepository.GetUserByNIP(ctx, payload.NIP)
-	if err != nil && !errors.Is(err, user_error.ErrUserNotFound) {
+	isNIPExists, err := s.UserRepository.VerifyNIP(ctx, payload.NIP)
+	if err != nil {
 		return nil, err
 	}
-	if user != nil {
+	if isNIPExists {
 		return nil, user_error.ErrNIPAlreadyExists
 	}
 
@@ -136,6 +130,20 @@ func (s *UserService) UpdateNurseUser(ctx context.Context, payload *user_entity.
 	}
 
 	err = s.UserRepository.UpdateNurseUser(ctx, payload)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserService) DeleteNurseUser(ctx context.Context, userId string) error {
+	user, err := s.UserRepository.GetUserByID(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	err = s.UserRepository.DeleteNurseUser(ctx, user.ID)
 	if err != nil {
 		return err
 	}

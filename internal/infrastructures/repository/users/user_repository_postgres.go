@@ -68,7 +68,7 @@ func (r *UserRepositoryPostgres) GetUserByID(ctx context.Context, id string) (us
 }
 
 func (r *UserRepositoryPostgres) GetUsers(ctx context.Context, params *user_entity.UserQueryParams) ([]*user_entity.UserList, error) {
-	query := "SELECT id, nip, name, created_at FROM users WHERE 1 = 1"
+	query := "SELECT id, nip, name, created_at FROM users WHERE is_deleted = false"
 	args := []interface{}{}
 	argID := 1
 
@@ -141,6 +141,15 @@ func (r *UserRepositoryPostgres) VerifyNIP(ctx context.Context, nip int) (bool, 
 func (r *UserRepositoryPostgres) UpdateNurseUser(ctx context.Context, payload *user_entity.UpdateNurseUser) error {
 	query := "UPDATE users SET nip = $1, name = $2 WHERE id = $3"
 	_, err := r.DB.Exec(ctx, query, &payload.NIP, &payload.Name, &payload.UserID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepositoryPostgres) DeleteNurseUser(ctx context.Context, userId string) error {
+	query := "UPDATE users SET is_deleted = $1 WHERE id = $2"
+	_, err := r.DB.Exec(ctx, query, true, userId)
 	if err != nil {
 		return err
 	}

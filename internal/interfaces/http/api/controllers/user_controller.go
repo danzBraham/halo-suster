@@ -35,6 +35,7 @@ func (c *UserController) Routes() chi.Router {
 		r.Post("/nurse/register", c.handleRegisterNurseUser)
 		r.Get("/", c.handleGetUsers)
 		r.Put("/nurse/{userId}", c.handleUpdateNurse)
+		r.Delete("/nurse/{userId}", c.handleDeleteNurse)
 	})
 
 	return r
@@ -406,5 +407,58 @@ func (c *UserController) handleUpdateNurse(w http.ResponseWriter, r *http.Reques
 
 	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
 		Message: "Nurse user successfully updated",
+	})
+}
+
+func (c *UserController) handleDeleteNurse(w http.ResponseWriter, r *http.Request) {
+	userId := chi.URLParam(r, "userId")
+	payload := &user_entity.UpdateNurseUser{
+		UserID: userId,
+	}
+
+	err := helpers.DecodeJSON(r, payload)
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
+			Error:   err.Error(),
+			Message: "Failed to decode JSON",
+		})
+		return
+	}
+
+	err = helpers.ValidatePayload(payload)
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
+			Error:   err.Error(),
+			Message: "Request doesn’t pass validation",
+		})
+		return
+	}
+
+	if strconv.Itoa(payload.NIP)[:3] != "303" {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Error:   "Not found error",
+			Message: user_error.ErrUserIsNotNurse.Error(),
+		})
+		return
+	}
+
+	err = c.Service.DeleteNurseUser(r.Context(), userId)
+	if errors.Is(err, user_error.ErrUserNotFound) {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Error:   "Not found error",
+			Message: err.Error(),
+		})
+		return
+	}
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusInternalServerError, &helpers.ResponseBody{
+			Error:   "Internal server error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
+		Message: "Nurse user successfully deleted",
 	})
 }

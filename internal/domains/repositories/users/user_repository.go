@@ -14,4 +14,5 @@ type UserRepository interface {
 	GetUsers(ctx context.Context, params *user_entity.UserQueryParams) ([]*user_entity.UserList, error)
 	VerifyNIP(ctx context.Context, nip int) (bool, error)
 	UpdateNurseUser(ctx context.Context, payload *user_entity.UpdateNurseUser) error
+	DeleteNurseUser(ctx context.Context, userId string) error
 }
