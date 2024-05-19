@@ -54,6 +54,19 @@ func (r *UserRepositoryPostgres) GetUserByNIP(ctx context.Context, nip int) (use
 	return user, nil
 }
 
+func (r *UserRepositoryPostgres) GetUserByID(ctx context.Context, id string) (user *user_entity.User, err error) {
+	user = &user_entity.User{}
+	query := "SELECT id, nip, name, role FROM users WHERE id = $1"
+	err = r.DB.QueryRow(ctx, query, id).Scan(&user.ID, &user.NIP, &user.Name, &user.Role)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, user_error.ErrUserNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func (r *UserRepositoryPostgres) GetUsers(ctx context.Context, params *user_entity.UserQueryParams) ([]*user_entity.UserList, error) {
 	query := "SELECT id, nip, name, created_at FROM users WHERE 1 = 1"
 	args := []interface{}{}
@@ -110,4 +123,26 @@ func (r *UserRepositoryPostgres) GetUsers(ctx context.Context, params *user_enti
 	}
 
 	return users, nil
+}
+
+func (r *UserRepositoryPostgres) VerifyNIP(ctx context.Context, nip int) (bool, error) {
+	var isNIPExists int
+	query := "SELECT 1 FROM users WHERE nip = $1"
+	err := r.DB.QueryRow(ctx, query, nip).Scan(&isNIPExists)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *UserRepositoryPostgres) UpdateNurseUser(ctx context.Context, payload *user_entity.UpdateNurseUser) error {
+	query := "UPDATE users SET nip = $1, name = $2 WHERE id = $3"
+	_, err := r.DB.Exec(ctx, query, &payload.NIP, &payload.Name, &payload.UserID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

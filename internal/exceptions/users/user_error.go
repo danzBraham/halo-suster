@@ -5,7 +5,7 @@ import "errors"
 var (
 	ErrUserNotFound     = errors.New("user not found")
 	ErrNIPAlreadyExists = errors.New("NIP already exists")
-	ErrNotITUserNIP     = errors.New("NIP not starts with 615")
-	ErrNotNurseUserNIP  = errors.New("NIP not starts with 303")
+	ErrUserIsNotIT      = errors.New("user is not IT")
+	ErrUserIsNotNurse   = errors.New("user is not a nurse")
 	ErrInvalidPassword  = errors.New("invalid password")
 )

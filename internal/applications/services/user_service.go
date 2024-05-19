@@ -23,7 +23,7 @@ func NewUserService(userRepository user_repository.UserRepository) interfaces.Us
 
 func (s *UserService) CreateITUser(ctx context.Context, payload *user_entity.RegisterITUser) (*user_entity.LoggedInUser, error) {
 	if strconv.Itoa(payload.NIP)[:3] != "615" {
-		return nil, user_error.ErrNotITUserNIP
+		return nil, user_error.ErrUserIsNotIT
 	}
 
 	user, err := s.UserRepository.GetUserByNIP(ctx, payload.NIP)
@@ -60,7 +60,7 @@ func (s *UserService) CreateITUser(ctx context.Context, payload *user_entity.Reg
 
 func (s *UserService) CreateNurseUser(ctx context.Context, payload *user_entity.RegisterNurseUser) (*user_entity.LoggedInUser, error) {
 	if strconv.Itoa(payload.NIP)[:3] != "303" {
-		return nil, user_error.ErrNotNurseUserNIP
+		return nil, user_error.ErrUserIsNotNurse
 	}
 
 	user, err := s.UserRepository.GetUserByNIP(ctx, payload.NIP)
@@ -123,4 +123,26 @@ func (s *UserService) GetUsers(ctx context.Context, params *user_entity.UserQuer
 	}
 
 	return users, nil
+}
+
+func (s *UserService) UpdateNurseUser(ctx context.Context, payload *user_entity.UpdateNurseUser) error {
+	currentUser, err := s.UserRepository.GetUserByID(ctx, payload.UserID)
+	if err != nil {
+		return err
+	}
+
+	isNIPExists, err := s.UserRepository.VerifyNIP(ctx, payload.NIP)
+	if err != nil {
+		return err
+	}
+	if isNIPExists && payload.NIP != currentUser.NIP {
+		return user_error.ErrNIPAlreadyExists
+	}
+
+	err = s.UserRepository.UpdateNurseUser(ctx, payload)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -58,3 +58,9 @@ type UserList struct {
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+type UpdateNurseUser struct {
+	UserID string `json:"userId"`
+	NIP    int    `json:"nip" validate:"required,nip"`
+	Name   string `json:"name" validate:"required,min=5,max=50"`
+}
