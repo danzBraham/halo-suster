@@ -3,6 +3,7 @@ package user_repository_postgres
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	user_entity "github.com/danzBraham/halo-suster/internal/domains/entities/users"
 	user_repository "github.com/danzBraham/halo-suster/internal/domains/repositories/users"
@@ -51,4 +52,62 @@ func (r *UserRepositoryPostgres) GetUserByNIP(ctx context.Context, nip int) (use
 		return nil, err
 	}
 	return user, nil
+}
+
+func (r *UserRepositoryPostgres) GetUsers(ctx context.Context, params *user_entity.UserQueryParams) ([]*user_entity.UserList, error) {
+	query := "SELECT id, nip, name, created_at FROM users WHERE 1 = 1"
+	args := []interface{}{}
+	argID := 1
+
+	if params.UserID != "" {
+		query += " AND id = $" + strconv.Itoa(argID)
+		args = append(args, params.UserID)
+		argID++
+	}
+
+	if params.NIP != "" {
+		query += ` AND nip::VARCHAR LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
+		args = append(args, params.NIP)
+		argID++
+	}
+
+	if params.Name != "" {
+		query += ` AND LOWER(name) LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
+		args = append(args, params.Name)
+		argID++
+	}
+
+	switch params.Role {
+	case "it":
+		query += " AND role = 'it'"
+	case "nurse":
+		query += " AND role = 'nurse'"
+	}
+
+	switch params.CreatedAt {
+	case "asc":
+		query += " ORDER BY created_at ASC"
+	case "desc":
+		query += " ORDER BY created_at DESC"
+	}
+
+	query += " LIMIT $" + strconv.Itoa(argID) + " OFFSET $" + strconv.Itoa(argID+1)
+	args = append(args, params.Limit, params.Offset)
+
+	rows, err := r.DB.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*user_entity.UserList{}
+	for rows.Next() {
+		var user user_entity.UserList
+		if err := rows.Scan(&user.ID, &user.NIP, &user.Name, &user.CreatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+
+	return users, nil
 }

@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/danzBraham/halo-suster/internal/applications/interfaces"
@@ -25,14 +26,14 @@ func NewUserController(userService interfaces.UserService) *UserController {
 func (c *UserController) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Route("/it", func(r chi.Router) {
-		r.Post("/register", c.handleRegisterITUser)
-		r.Post("/login", c.handleLogin)
-	})
+	r.Post("/it/register", c.handleRegisterITUser)
+	r.Post("/it/login", c.handleUserLogin)
+	r.Post("/nurse/login", c.handleUserLogin)
 
-	r.Route("/nurse", func(r chi.Router) {
+	r.Group(func(r chi.Router) {
 		r.Use(middlewares.AuthMiddleware)
-		r.Post("/register", c.handleRegisterNurseUser)
+		r.Post("/nurse/register", c.handleRegisterNurseUser)
+		r.Get("/", c.handleGetUsers)
 	})
 
 	return r
@@ -175,7 +176,7 @@ func (c *UserController) handleRegisterNurseUser(w http.ResponseWriter, r *http.
 	})
 }
 
-func (c *UserController) handleLogin(w http.ResponseWriter, r *http.Request) {
+func (c *UserController) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	payload := &user_entity.LoginUser{}
 
 	err := helpers.DecodeJSON(r, payload)
@@ -229,5 +230,45 @@ func (c *UserController) handleLogin(w http.ResponseWriter, r *http.Request) {
 	helpers.ResponseJSON(w, http.StatusCreated, &helpers.ResponseBody{
 		Message: "User successfully login",
 		Data:    user,
+	})
+}
+
+func (c *UserController) handleGetUsers(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	params := &user_entity.UserQueryParams{
+		UserID:    query.Get("userId"),
+		Limit:     5,
+		Offset:    0,
+		NIP:       query.Get("nip"),
+		Name:      query.Get("name"),
+		Role:      query.Get("role"),
+		CreatedAt: query.Get("createdAt"),
+	}
+
+	if limitStr := query.Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil {
+			params.Limit = l
+		}
+	}
+
+	if offsetStr := query.Get("offset"); offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil {
+			params.Offset = o
+		}
+	}
+
+	users, err := c.Service.GetUsers(r.Context(), params)
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusInternalServerError, &helpers.ResponseBody{
+			Error:   "Internal server error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
+		Message: "success",
+		Data:    users,
 	})
 }

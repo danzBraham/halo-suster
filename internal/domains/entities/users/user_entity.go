@@ -1,5 +1,7 @@
 package user_entity
 
+import "time"
+
 type Role string
 
 const (
@@ -8,11 +10,12 @@ const (
 )
 
 type User struct {
-	ID       string `json:"id"`
-	NIP      int    `json:"nip"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
-	Role     Role   `json:"role"`
+	ID        string    `json:"id"`
+	NIP       int       `json:"nip"`
+	Name      string    `json:"name"`
+	Password  string    `json:"password"`
+	Role      Role      `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type RegisterITUser struct {
@@ -37,4 +40,21 @@ type LoggedInUser struct {
 	NIP         int    `json:"nip"`
 	Name        string `json:"name"`
 	AccessToken string `json:"accessToken"`
+}
+
+type UserQueryParams struct {
+	UserID    string
+	Limit     int
+	Offset    int
+	Name      string
+	NIP       string
+	Role      string
+	CreatedAt string
+}
+
+type UserList struct {
+	ID        string    `json:"userId"`
+	NIP       int       `json:"nip"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
 }

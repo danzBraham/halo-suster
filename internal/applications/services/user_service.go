@@ -115,3 +115,12 @@ func (s *UserService) UserLogin(ctx context.Context, payload *user_entity.LoginU
 		AccessToken: accessToken,
 	}, nil
 }
+
+func (s *UserService) GetUsers(ctx context.Context, params *user_entity.UserQueryParams) ([]*user_entity.UserList, error) {
+	users, err := s.UserRepository.GetUsers(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}

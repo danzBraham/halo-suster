@@ -52,6 +52,13 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			})
 			return
 		}
+		if err != nil {
+			helpers.ResponseJSON(w, http.StatusUnauthorized, &helpers.ResponseBody{
+				Error:   "Unauthorized error",
+				Message: err.Error(),
+			})
+			return
+		}
 
 		ctx := context.WithValue(r.Context(), ContextUserIDKey, credential.UserId)
 		ctx = context.WithValue(ctx, ContextRoleKey, credential.Role)

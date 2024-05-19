@@ -56,9 +56,9 @@ func DecodeJSON(r *http.Request, payload interface{}) error {
 }
 
 type ResponseBody struct {
+	Error   string      `json:"error,omitempty"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
-	Error   string      `json:"error,omitempty"`
 }
 
 func ResponseJSON(w http.ResponseWriter, status int, payload interface{}) error {

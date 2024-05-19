@@ -49,7 +49,11 @@ func VerifyJWT(tokenString string) (*Credential, error) {
 		return key, nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, auth_error.ErrInvalidToken
+	}
+
+	if token == nil {
+		return nil, auth_error.ErrInvalidToken
 	}
 
 	if !token.Valid {
@@ -57,7 +61,7 @@ func VerifyJWT(tokenString string) (*Credential, error) {
 	}
 
 	claims, ok := token.Claims.(*CustomClaims)
-	if !ok {
+	if !ok || claims == nil {
 		return nil, auth_error.ErrUnknownClaims
 	}
 
