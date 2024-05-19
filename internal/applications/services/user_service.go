@@ -122,6 +122,10 @@ func (s *UserService) UpdateNurseUser(ctx context.Context, payload *user_entity.
 		return err
 	}
 
+	if strconv.Itoa(currentUser.NIP)[:3] != "303" {
+		return user_error.ErrUserIsNotNurse
+	}
+
 	isNIPExists, err := s.UserRepository.VerifyNIP(ctx, payload.NIP)
 	if err != nil {
 		return err
@@ -142,6 +146,10 @@ func (s *UserService) DeleteNurseUser(ctx context.Context, userId string) error 
 	user, err := s.UserRepository.GetUserByID(ctx, userId)
 	if err != nil {
 		return err
+	}
+
+	if strconv.Itoa(user.NIP)[:3] != "303" {
+		return user_error.ErrUserIsNotNurse
 	}
 
 	err = s.UserRepository.DeleteNurseUser(ctx, user.ID)

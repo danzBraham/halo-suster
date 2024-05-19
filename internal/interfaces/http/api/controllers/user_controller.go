@@ -375,16 +375,15 @@ func (c *UserController) handleUpdateNurseUser(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if strconv.Itoa(payload.NIP)[:3] != "303" {
+	err = c.Service.UpdateNurseUser(r.Context(), payload)
+	if errors.Is(err, user_error.ErrUserNotFound) {
 		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
 			Error:   "Not found error",
-			Message: user_error.ErrUserIsNotNurse.Error(),
+			Message: err.Error(),
 		})
 		return
 	}
-
-	err = c.Service.UpdateNurseUser(r.Context(), payload)
-	if errors.Is(err, user_error.ErrUserNotFound) {
+	if errors.Is(err, user_error.ErrUserIsNotNurse) {
 		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
 			Error:   "Not found error",
 			Message: err.Error(),
@@ -435,16 +434,15 @@ func (c *UserController) handleDeleteNurseUser(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if strconv.Itoa(payload.NIP)[:3] != "303" {
+	err = c.Service.DeleteNurseUser(r.Context(), userId)
+	if errors.Is(err, user_error.ErrUserNotFound) {
 		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
 			Error:   "Not found error",
-			Message: user_error.ErrUserIsNotNurse.Error(),
+			Message: err.Error(),
 		})
 		return
 	}
-
-	err = c.Service.DeleteNurseUser(r.Context(), userId)
-	if errors.Is(err, user_error.ErrUserNotFound) {
+	if errors.Is(err, user_error.ErrUserIsNotNurse) {
 		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
 			Error:   "Not found error",
 			Message: err.Error(),
