@@ -6,7 +6,7 @@ import (
 
 	"github.com/danzBraham/halo-suster/internal/applications/services"
 	"github.com/danzBraham/halo-suster/internal/helpers"
-	user_repository_postgres "github.com/danzBraham/halo-suster/internal/infrastructures/repository/user"
+	user_repository_postgres "github.com/danzBraham/halo-suster/internal/infrastructures/repository/users"
 	"github.com/danzBraham/halo-suster/internal/interfaces/http/api/controllers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

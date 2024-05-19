@@ -22,15 +22,11 @@ func NewUserService(userRepository user_repository.UserRepository) interfaces.Us
 }
 
 func (s *UserService) CreateITUser(ctx context.Context, payload *user_entity.RegisterITUser) (*user_entity.LoggedInUser, error) {
-	if strconv.Itoa(payload.NIP)[:3] != "615" {
-		return nil, user_error.ErrUserIsNotIT
-	}
-
-	user, err := s.UserRepository.GetUserByNIP(ctx, payload.NIP)
-	if err != nil && !errors.Is(err, user_error.ErrUserNotFound) {
+	isNIPExists, err := s.UserRepository.VerifyNIP(ctx, payload.NIP)
+	if err != nil {
 		return nil, err
 	}
-	if user != nil {
+	if isNIPExists {
 		return nil, user_error.ErrNIPAlreadyExists
 	}
 
@@ -89,7 +85,7 @@ func (s *UserService) CreateNurseUser(ctx context.Context, payload *user_entity.
 	}, nil
 }
 
-func (s *UserService) UserLogin(ctx context.Context, payload *user_entity.LoginUser) (*user_entity.LoggedInUser, error) {
+func (s *UserService) LoginUser(ctx context.Context, payload *user_entity.LoginUser) (*user_entity.LoggedInUser, error) {
 	user, err := s.UserRepository.GetUserByNIP(ctx, payload.NIP)
 	if err != nil {
 		return nil, err
