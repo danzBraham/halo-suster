@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/danzBraham/halo-suster/internal/applications/interfaces"
@@ -144,6 +145,30 @@ func (s *UserService) DeleteNurseUser(ctx context.Context, userId string) error 
 	}
 
 	err = s.UserRepository.DeleteNurseUser(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserService) GiveAccessNurseUser(ctx context.Context, payload *user_entity.GiveAccessNurseUser) error {
+	user, err := s.UserRepository.GetUserByID(ctx, payload.UserID)
+	if err != nil {
+		return err
+	}
+
+	if strconv.Itoa(user.NIP)[:3] != "303" {
+		return user_error.ErrUserIsNotNurse
+	}
+
+	hashedPassword, err := helpers.HashPassword(payload.Password)
+	if err != nil {
+		return err
+	}
+	payload.Password = hashedPassword
+
+	err = s.UserRepository.GiveAccessNurseUser(ctx, payload)
 	if err != nil {
 		return err
 	}

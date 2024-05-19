@@ -64,3 +64,8 @@ type UpdateNurseUser struct {
 	NIP    int    `json:"nip" validate:"required,nip"`
 	Name   string `json:"name" validate:"required,min=5,max=50"`
 }
+
+type GiveAccessNurseUser struct {
+	UserID   string `json:"userId"`
+	Password string `json:"password" validate:"required,min=5,max=33"`
+}

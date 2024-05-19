@@ -148,8 +148,17 @@ func (r *UserRepositoryPostgres) UpdateNurseUser(ctx context.Context, payload *u
 }
 
 func (r *UserRepositoryPostgres) DeleteNurseUser(ctx context.Context, userId string) error {
-	query := "UPDATE users SET is_deleted = $1 WHERE id = $2"
-	_, err := r.DB.Exec(ctx, query, true, userId)
+	query := "UPDATE users SET is_deleted = true WHERE id = $1"
+	_, err := r.DB.Exec(ctx, query, userId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepositoryPostgres) GiveAccessNurseUser(ctx context.Context, payload *user_entity.GiveAccessNurseUser) error {
+	query := "UPDATE users SET password = $1 WHERE id = $2"
+	_, err := r.DB.Exec(ctx, query, &payload.Password, &payload.UserID)
 	if err != nil {
 		return err
 	}

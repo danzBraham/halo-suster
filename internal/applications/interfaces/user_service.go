@@ -13,4 +13,5 @@ type UserService interface {
 	GetUsers(ctx context.Context, params *user_entity.UserQueryParams) ([]*user_entity.UserList, error)
 	UpdateNurseUser(ctx context.Context, payload *user_entity.UpdateNurseUser) error
 	DeleteNurseUser(ctx context.Context, userId string) error
+	GiveAccessNurseUser(ctx context.Context, payload *user_entity.GiveAccessNurseUser) error
 }

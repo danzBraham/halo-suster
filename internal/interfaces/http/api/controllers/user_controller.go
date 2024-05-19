@@ -34,8 +34,9 @@ func (c *UserController) Routes() chi.Router {
 		r.Use(middlewares.AuthMiddleware)
 		r.Post("/nurse/register", c.handleRegisterNurseUser)
 		r.Get("/", c.handleGetUsers)
-		r.Put("/nurse/{userId}", c.handleUpdateNurse)
-		r.Delete("/nurse/{userId}", c.handleDeleteNurse)
+		r.Put("/nurse/{userId}", c.handleUpdateNurseUser)
+		r.Delete("/nurse/{userId}", c.handleDeleteNurseUser)
+		r.Post("/nurse/{userId}/access", c.handleGiveAccessNurseUser)
 	})
 
 	return r
@@ -350,7 +351,7 @@ func (c *UserController) handleGetUsers(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-func (c *UserController) handleUpdateNurse(w http.ResponseWriter, r *http.Request) {
+func (c *UserController) handleUpdateNurseUser(w http.ResponseWriter, r *http.Request) {
 	userId := chi.URLParam(r, "userId")
 	payload := &user_entity.UpdateNurseUser{
 		UserID: userId,
@@ -410,7 +411,7 @@ func (c *UserController) handleUpdateNurse(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-func (c *UserController) handleDeleteNurse(w http.ResponseWriter, r *http.Request) {
+func (c *UserController) handleDeleteNurseUser(w http.ResponseWriter, r *http.Request) {
 	userId := chi.URLParam(r, "userId")
 	payload := &user_entity.UpdateNurseUser{
 		UserID: userId,
@@ -460,5 +461,57 @@ func (c *UserController) handleDeleteNurse(w http.ResponseWriter, r *http.Reques
 
 	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
 		Message: "Nurse user successfully deleted",
+	})
+}
+
+func (c *UserController) handleGiveAccessNurseUser(w http.ResponseWriter, r *http.Request) {
+	userId := chi.URLParam(r, "userId")
+	payload := &user_entity.GiveAccessNurseUser{
+		UserID: userId,
+	}
+
+	err := helpers.DecodeJSON(r, payload)
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
+			Error:   err.Error(),
+			Message: "Failed to decode JSON",
+		})
+		return
+	}
+
+	err = helpers.ValidatePayload(payload)
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
+			Error:   err.Error(),
+			Message: "Request doesn’t pass validation",
+		})
+		return
+	}
+
+	err = c.Service.GiveAccessNurseUser(r.Context(), payload)
+	if errors.Is(err, user_error.ErrUserNotFound) {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Error:   "Not found error",
+			Message: err.Error(),
+		})
+		return
+	}
+	if errors.Is(err, user_error.ErrUserIsNotNurse) {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Error:   "Not found error",
+			Message: err.Error(),
+		})
+		return
+	}
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusInternalServerError, &helpers.ResponseBody{
+			Error:   "Internal server error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
+		Message: "Nurse user successfully granted access",
 	})
 }

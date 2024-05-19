@@ -15,4 +15,5 @@ type UserRepository interface {
 	VerifyNIP(ctx context.Context, nip int) (bool, error)
 	UpdateNurseUser(ctx context.Context, payload *user_entity.UpdateNurseUser) error
 	DeleteNurseUser(ctx context.Context, userId string) error
+	GiveAccessNurseUser(ctx context.Context, payload *user_entity.GiveAccessNurseUser) error
 }
