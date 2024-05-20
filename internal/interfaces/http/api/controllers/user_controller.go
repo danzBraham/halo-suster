@@ -16,7 +16,6 @@ import (
 
 type UserController struct {
 	Service interfaces.UserService
-	Router  chi.Router
 }
 
 func NewUserController(userService interfaces.UserService) *UserController {

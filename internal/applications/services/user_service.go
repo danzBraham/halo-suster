@@ -7,16 +7,16 @@ import (
 
 	"github.com/danzBraham/halo-suster/internal/applications/interfaces"
 	user_entity "github.com/danzBraham/halo-suster/internal/domains/entities/users"
-	user_repository "github.com/danzBraham/halo-suster/internal/domains/repositories/users"
+	"github.com/danzBraham/halo-suster/internal/domains/repositories"
 	user_error "github.com/danzBraham/halo-suster/internal/exceptions/users"
 	"github.com/danzBraham/halo-suster/internal/helpers"
 )
 
 type UserService struct {
-	UserRepository user_repository.UserRepository
+	UserRepository repositories.UserRepository
 }
 
-func NewUserService(userRepository user_repository.UserRepository) interfaces.UserService {
+func NewUserService(userRepository repositories.UserRepository) interfaces.UserService {
 	return &UserService{UserRepository: userRepository}
 }
 

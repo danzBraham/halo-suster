@@ -1,4 +1,4 @@
-package user_repository_postgres
+package repository_postgres
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	user_entity "github.com/danzBraham/halo-suster/internal/domains/entities/users"
-	user_repository "github.com/danzBraham/halo-suster/internal/domains/repositories/users"
+	"github.com/danzBraham/halo-suster/internal/domains/repositories"
 	user_error "github.com/danzBraham/halo-suster/internal/exceptions/users"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,7 +17,7 @@ type UserRepositoryPostgres struct {
 	DB *pgxpool.Pool
 }
 
-func NewUserRepositoryPostgres(db *pgxpool.Pool) user_repository.UserRepository {
+func NewUserRepositoryPostgres(db *pgxpool.Pool) repositories.UserRepository {
 	return &UserRepositoryPostgres{DB: db}
 }
 

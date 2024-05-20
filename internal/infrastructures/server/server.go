@@ -6,7 +6,7 @@ import (
 
 	"github.com/danzBraham/halo-suster/internal/applications/services"
 	"github.com/danzBraham/halo-suster/internal/helpers"
-	user_repository_postgres "github.com/danzBraham/halo-suster/internal/infrastructures/repository/users"
+	repository_postgres "github.com/danzBraham/halo-suster/internal/infrastructures/repository"
 	"github.com/danzBraham/halo-suster/internal/interfaces/http/api/controllers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -38,12 +38,19 @@ func (s *APIServer) Launch() error {
 		})
 	})
 
-	userRepository := user_repository_postgres.NewUserRepositoryPostgres(s.DB)
+	// User domain
+	userRepository := repository_postgres.NewUserRepositoryPostgres(s.DB)
 	userService := services.NewUserService(userRepository)
 	userController := controllers.NewUserController(userService)
 
+	// Medical domain
+	medicalRepository := repository_postgres.NewMedicalRepositoryPostgres(s.DB)
+	medicalService := services.NewMedicalService(medicalRepository)
+	medicalController := controllers.NewMedicalController(medicalService)
+
 	r.Route("/v1", func(r chi.Router) {
 		r.Mount("/user", userController.Routes())
+		r.Mount("/medical", medicalController.Routes())
 	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {

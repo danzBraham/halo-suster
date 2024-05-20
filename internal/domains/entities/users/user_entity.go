@@ -27,7 +27,7 @@ type RegisterITUser struct {
 type RegisterNurseUser struct {
 	NIP          int    `json:"nip" validate:"required,nip"`
 	Name         string `json:"name" validate:"required,min=5,max=50"`
-	CardImageURL string `json:"identityCardScanImg" validate:"url"`
+	CardImageURL string `json:"identityCardScanImg" validate:"required,url"`
 }
 
 type LoginUser struct {

@@ -11,6 +11,7 @@ var validate = validator.New(validator.WithRequiredStructEnabled())
 
 func NewValidate() {
 	validate.RegisterValidation("nip", validateUserNIP)
+	validate.RegisterValidation("identitynumber", validateIdentityNumber)
 }
 
 func ValidatePayload(payload interface{}) error {
@@ -61,4 +62,10 @@ func validateUserNIP(fl validator.FieldLevel) bool {
 	}
 
 	return true
+}
+
+func validateIdentityNumber(fl validator.FieldLevel) bool {
+	identityNumber := fl.Field().Int()
+	identityNumberStr := strconv.Itoa(int(identityNumber))
+	return len(identityNumberStr) == 16
 }
