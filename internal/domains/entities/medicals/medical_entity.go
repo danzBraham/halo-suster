@@ -1,5 +1,7 @@
 package medical_entity
 
+import "time"
+
 type Gender string
 
 const (
@@ -14,4 +16,22 @@ type AddMedicalPatient struct {
 	BirthDate      string `json:"birthDate" validate:"required,datetime=2006-01-02"`
 	Gender         Gender `json:"gender" validate:"required,oneof=male female"`
 	CardImageURL   string `json:"identityCardScanImg" validate:"required,url"`
+}
+
+type MedicalPatient struct {
+	IdentityNumber int       `json:"identityNumber"`
+	PhoneNumber    string    `json:"phoneNumber"`
+	Name           string    `json:"name"`
+	BirthDate      time.Time `json:"birthDate"`
+	Gender         Gender    `json:"gender"`
+	CreatedAt      time.Time `json:"createdAt"`
+}
+
+type MedicalPatientParams struct {
+	IdentityNumber string
+	Limit          string
+	Offset         string
+	Name           string
+	PhoneNumber    string
+	CreatedAt      string
 }

@@ -25,6 +25,7 @@ func (c *MedicalController) Routes() chi.Router {
 
 	r.Use(middlewares.AuthMiddleware)
 	r.Post("/patient", c.handleAddMedicalPatient)
+	r.Get("/patient", c.handleGetMedicalPatients)
 
 	return r
 }
@@ -68,5 +69,44 @@ func (c *MedicalController) handleAddMedicalPatient(w http.ResponseWriter, r *ht
 
 	helpers.ResponseJSON(w, http.StatusCreated, &helpers.ResponseBody{
 		Message: "Medical patient successfully added",
+	})
+}
+
+func (c *MedicalController) handleGetMedicalPatients(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	params := &medical_entity.MedicalPatientParams{
+		IdentityNumber: query.Get("identityNumber"),
+		Limit:          "5",
+		Offset:         "0",
+		Name:           query.Get("name"),
+		PhoneNumber:    query.Get("phoneNumber"),
+		CreatedAt:      "desc",
+	}
+
+	if limit := query.Get("limit"); limit != "" {
+		params.Limit = limit
+	}
+
+	if offset := query.Get("offset"); offset != "" {
+		params.Offset = offset
+	}
+
+	if createdAt := query.Get("createdAt"); createdAt != "" {
+		params.CreatedAt = createdAt
+	}
+
+	medicalPatients, err := c.MedicalService.GetMedicalPatients(r.Context(), params)
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusInternalServerError, &helpers.ResponseBody{
+			Error:   "Internal server error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
+		Message: "success",
+		Data:    medicalPatients,
 	})
 }

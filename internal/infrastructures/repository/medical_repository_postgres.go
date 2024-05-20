@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
 	medical_entity "github.com/danzBraham/halo-suster/internal/domains/entities/medicals"
 	"github.com/danzBraham/halo-suster/internal/domains/repositories"
@@ -52,4 +53,70 @@ func (r *MedicalRepositoryPostgres) CreatePatient(ctx context.Context, payload *
 	}
 
 	return nil
+}
+
+func (r *MedicalRepositoryPostgres) GetMedicalPatients(ctx context.Context, params *medical_entity.MedicalPatientParams) ([]*medical_entity.MedicalPatient, error) {
+	query := `SELECT identity_number, phone_number, name, birth_date, gender, created_at 
+							FROM patients WHERE is_deleted = false`
+	args := []interface{}{}
+	argID := 1
+
+	if params.IdentityNumber != "" {
+		query += ` AND identity_number LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
+		args = append(args, params.IdentityNumber)
+		argID++
+	}
+
+	if params.PhoneNumber != "" {
+		query += ` AND phone_number LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
+		args = append(args, strings.TrimPrefix(params.PhoneNumber, "+"))
+		argID++
+	}
+
+	if params.Name != "" {
+		query += ` AND LOWER(name) LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
+		args = append(args, params.Name)
+		argID++
+	}
+
+	switch params.CreatedAt {
+	case "asc":
+		query += " ORDER BY created_at ASC"
+	case "desc":
+		query += " ORDER BY created_at DESC"
+	}
+
+	query += " LIMIT $" + strconv.Itoa(argID) + " OFFSET $" + strconv.Itoa(argID+1)
+	args = append(args, params.Limit, params.Offset)
+
+	rows, err := r.DB.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	medicalPatients := []*medical_entity.MedicalPatient{}
+	for rows.Next() {
+		var identityNumber string
+		var medicalPatient medical_entity.MedicalPatient
+		err := rows.Scan(
+			&identityNumber,
+			&medicalPatient.PhoneNumber,
+			&medicalPatient.Name,
+			&medicalPatient.BirthDate,
+			&medicalPatient.Gender,
+			&medicalPatient.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		identityNumberInt, err := strconv.Atoi(identityNumber)
+		if err != nil {
+			return nil, err
+		}
+		medicalPatient.IdentityNumber = identityNumberInt
+		medicalPatients = append(medicalPatients, &medicalPatient)
+	}
+
+	return medicalPatients, nil
 }

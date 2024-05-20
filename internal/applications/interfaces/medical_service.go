@@ -8,4 +8,5 @@ import (
 
 type MedicalService interface {
 	CreatePatient(ctx context.Context, payload *medical_entity.AddMedicalPatient) error
+	GetMedicalPatients(ctx context.Context, params *medical_entity.MedicalPatientParams) ([]*medical_entity.MedicalPatient, error)
 }
