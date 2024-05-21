@@ -59,3 +59,12 @@ func (s *MedicalService) CreateMedicalRecord(ctx context.Context, payload *medic
 
 	return nil
 }
+
+func (s *MedicalService) GetMedicalRecords(ctx context.Context, params *medical_entity.MedicalRecordParams) ([]*medical_entity.MedicalRecord, error) {
+	medicalRecords, err := s.MedicalRepository.GetMedicalRecords(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return medicalRecords, nil
+}

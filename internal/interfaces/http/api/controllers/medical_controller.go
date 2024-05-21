@@ -27,6 +27,7 @@ func (c *MedicalController) Routes() chi.Router {
 	r.Post("/patient", c.handleAddMedicalPatient)
 	r.Get("/patient", c.handleGetMedicalPatients)
 	r.Post("/record", c.handleAddMedicalRecord)
+	r.Get("/record", c.handleGetMedicalRecords)
 
 	return r
 }
@@ -159,5 +160,44 @@ func (c *MedicalController) handleAddMedicalRecord(w http.ResponseWriter, r *htt
 
 	helpers.ResponseJSON(w, http.StatusCreated, &helpers.ResponseBody{
 		Message: "Medical record successfully added",
+	})
+}
+
+func (c *MedicalController) handleGetMedicalRecords(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	params := &medical_entity.MedicalRecordParams{
+		IdentityNumber: query.Get("identityDetail.identityNumber"),
+		UserID:         query.Get("createdBy.userId"),
+		NIP:            query.Get("createdBy.nip"),
+		Limit:          "5",
+		Offset:         "0",
+		CreatedAt:      "desc",
+	}
+
+	if limit := query.Get("limit"); limit != "" {
+		params.Limit = limit
+	}
+
+	if offset := query.Get("offset"); offset != "" {
+		params.Offset = offset
+	}
+
+	if createdAt := query.Get("createdAt"); createdAt != "" {
+		params.CreatedAt = createdAt
+	}
+
+	medicalRecords, err := c.MedicalService.GetMedicalRecords(r.Context(), params)
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusInternalServerError, &helpers.ResponseBody{
+			Error:   "Internal server error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
+		Message: "success",
+		Data:    medicalRecords,
 	})
 }

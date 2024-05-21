@@ -142,3 +142,88 @@ func (r *MedicalRepositoryPostgres) CreateMedicalRecord(ctx context.Context, pay
 
 	return nil
 }
+
+func (r *MedicalRepositoryPostgres) GetMedicalRecords(ctx context.Context, params *medical_entity.MedicalRecordParams) ([]*medical_entity.MedicalRecord, error) {
+	query := `SELECT
+							p.identity_number, p.phone_number, p.name, p.birth_date, p.gender, p.card_image_url,
+							m.symptoms, m.medications, m.created_at,
+							u.nip, u.name, u.id
+						FROM medical_records m
+						INNER JOIN patients p ON m.patient_identity_number = p.identity_number
+						INNER JOIN users u ON m.created_by = u.id
+						WHERE m.is_deleted = false`
+	args := []interface{}{}
+	argID := 1
+
+	if params.IdentityNumber != "" {
+		query += ` AND p.identity_number LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
+		args = append(args, params.IdentityNumber)
+		argID++
+	}
+
+	if params.UserID != "" {
+		query += ` AND u.id LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
+		args = append(args, params.UserID)
+		argID++
+	}
+
+	if params.NIP != "" {
+		query += ` AND u.nip::TEXT LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
+		args = append(args, params.NIP)
+		argID++
+	}
+
+	switch params.CreatedAt {
+	case "asc":
+		query += " ORDER BY created_at ASC"
+	case "desc":
+		query += " ORDER BY created_at DESC"
+	}
+
+	query += " LIMIT $" + strconv.Itoa(argID) + " OFFSET $" + strconv.Itoa(argID+1)
+	args = append(args, params.Limit, params.Offset)
+
+	rows, err := r.DB.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	medicalRecords := []*medical_entity.MedicalRecord{}
+	for rows.Next() {
+		var identityNumber string
+		// var nip string
+		var identityDetail medical_entity.IdentityDetail
+		var medicalRecord medical_entity.MedicalRecord
+		var createdByDetail medical_entity.CreatedByDetail
+
+		err := rows.Scan(
+			&identityNumber, &identityDetail.PhoneNumber, &identityDetail.Name, &identityDetail.BirthDate, &identityDetail.Gender, &identityDetail.CardImageURL,
+			&medicalRecord.Symptoms, &medicalRecord.Medications, &medicalRecord.CreatedAt,
+			&createdByDetail.NIP, &createdByDetail.Name, &createdByDetail.UserID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		identityNumberInt, err := strconv.Atoi(identityNumber)
+		if err != nil {
+			return nil, err
+		}
+
+		// nipInt, err := strconv.Atoi(nip)
+		// if err != nil {
+		// 	return nil, err
+		// }
+
+		identityDetail.IdentityNumber = identityNumberInt
+		// createdByDetail.NIP = nipInt
+
+		medicalRecord.IdentityDetail = identityDetail
+		medicalRecord.CreatedByDetail = createdByDetail
+
+		medicalRecords = append(medicalRecords, &medicalRecord)
+	}
+
+	return medicalRecords, nil
+}

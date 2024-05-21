@@ -42,3 +42,35 @@ type AddMedicalRecord struct {
 	Medications    string `json:"medications" validate:"required,min=1,max=2000"`
 	UserID         string `json:"userId" validate:"required"`
 }
+
+type IdentityDetail struct {
+	IdentityNumber int       `json:"identityNumber"`
+	PhoneNumber    string    `json:"phoneNumber"`
+	Name           string    `json:"name"`
+	BirthDate      time.Time `json:"birthDate"`
+	Gender         Gender    `json:"gender"`
+	CardImageURL   string    `json:"identityCardScanImg"`
+}
+
+type CreatedByDetail struct {
+	NIP    int    `json:"nip"`
+	Name   string `json:"name"`
+	UserID string `json:"userId"`
+}
+
+type MedicalRecord struct {
+	IdentityDetail  IdentityDetail  `json:"identityDetail"`
+	Symptoms        string          `json:"symptoms"`
+	Medications     string          `json:"medications"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	CreatedByDetail CreatedByDetail `json:"createdBy"`
+}
+
+type MedicalRecordParams struct {
+	IdentityNumber string
+	UserID         string
+	NIP            string
+	Limit          string
+	Offset         string
+	CreatedAt      string
+}
