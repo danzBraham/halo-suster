@@ -28,9 +28,8 @@ func NewAPIServer(addr string, db *pgxpool.Pool) *APIServer {
 func (s *APIServer) Launch() error {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Use(middleware.CleanPath)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.AllowContentType("application/json"))
+	r.Use(middleware.CleanPath)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
@@ -48,9 +47,13 @@ func (s *APIServer) Launch() error {
 	medicalService := services.NewMedicalService(medicalRepository)
 	medicalController := controllers.NewMedicalController(medicalService)
 
+	// Upload domain
+	uploadController := controllers.NewUploadController()
+
 	r.Route("/v1", func(r chi.Router) {
 		r.Mount("/user", userController.Routes())
 		r.Mount("/medical", medicalController.Routes())
+		r.Mount("/", uploadController.Routes())
 	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {

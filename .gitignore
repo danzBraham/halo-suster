@@ -25,6 +25,7 @@ go.sum
 
 .env
 *.png
+/uploads
 
 *.pem
 w1key
