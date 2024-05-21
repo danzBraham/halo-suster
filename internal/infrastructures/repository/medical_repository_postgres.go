@@ -3,6 +3,7 @@ package repository_postgres
 import (
 	"context"
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 
@@ -119,4 +120,25 @@ func (r *MedicalRepositoryPostgres) GetMedicalPatients(ctx context.Context, para
 	}
 
 	return medicalPatients, nil
+}
+
+func (r *MedicalRepositoryPostgres) CreateMedicalRecord(ctx context.Context, payload *medical_entity.AddMedicalRecord) error {
+	id := ulid.Make().String()
+	log.Println(payload.UserID)
+	query := `INSERT INTO 
+							medical_records (id, symptoms, medications, patient_identity_number, created_by)
+							VALUES ($1, $2, $3, $4, $5)`
+	_, err := r.DB.Exec(ctx, query,
+		id,
+		&payload.Symptoms,
+		&payload.Medications,
+		strconv.Itoa(payload.IdentityNumber),
+		&payload.UserID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

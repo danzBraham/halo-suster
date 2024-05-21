@@ -26,6 +26,7 @@ func (c *MedicalController) Routes() chi.Router {
 	r.Use(middlewares.AuthMiddleware)
 	r.Post("/patient", c.handleAddMedicalPatient)
 	r.Get("/patient", c.handleGetMedicalPatients)
+	r.Post("/record", c.handleAddMedicalRecord)
 
 	return r
 }
@@ -108,5 +109,55 @@ func (c *MedicalController) handleGetMedicalPatients(w http.ResponseWriter, r *h
 	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
 		Message: "success",
 		Data:    medicalPatients,
+	})
+}
+
+func (c *MedicalController) handleAddMedicalRecord(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middlewares.ContextUserIDKey).(string)
+	if !ok {
+		helpers.ResponseJSON(w, http.StatusInternalServerError, &helpers.ResponseBody{
+			Error:   "User ID type assertion failed",
+			Message: "User ID not found in context",
+		})
+		return
+	}
+	payload := &medical_entity.AddMedicalRecord{UserID: userID}
+
+	err := helpers.DecodeJSON(r, payload)
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
+			Error:   err.Error(),
+			Message: "Failed to decode JSON",
+		})
+		return
+	}
+
+	err = helpers.ValidatePayload(payload)
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
+			Error:   err.Error(),
+			Message: "Request doesn’t pass validation",
+		})
+		return
+	}
+
+	err = c.MedicalService.CreateMedicalRecord(r.Context(), payload)
+	if errors.Is(err, medical_error.ErrIdentityNumberIsNotExists) {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Error:   "Not found error",
+			Message: err.Error(),
+		})
+		return
+	}
+	if err != nil {
+		helpers.ResponseJSON(w, http.StatusInternalServerError, &helpers.ResponseBody{
+			Error:   "Internal server error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	helpers.ResponseJSON(w, http.StatusCreated, &helpers.ResponseBody{
+		Message: "Medical record successfully added",
 	})
 }

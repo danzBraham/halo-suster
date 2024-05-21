@@ -1,8 +1,13 @@
-CREATE TYPE genders AS ENUM ('male', 'female');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'genders') THEN
+    CREATE TYPE genders AS ENUM ('male', 'female');
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS patients (
   id VARCHAR(26) NOT NULL PRIMARY KEY,
-  identity_number VARCHAR(16) NOT NULL,
+  identity_number VARCHAR(16) NOT NULL UNIQUE,
   phone_number VARCHAR(15) NOT NULL,
   name VARCHAR(30) NOT NULL,
   birth_date TIMESTAMP NOT NULL,

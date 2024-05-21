@@ -1,4 +1,9 @@
-CREATE TYPE roles AS ENUM ('it', 'nurse');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'roles') THEN
+    CREATE TYPE roles AS ENUM ('it', 'nurse');
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(26) NOT NULL PRIMARY KEY,

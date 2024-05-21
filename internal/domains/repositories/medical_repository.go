@@ -7,7 +7,8 @@ import (
 )
 
 type MedicalRepository interface {
-	CreatePatient(ctx context.Context, payload *medical_entity.AddMedicalPatient) error
 	VerifyIdentityNumber(ctx context.Context, identityNumber int) (bool, error)
+	CreatePatient(ctx context.Context, payload *medical_entity.AddMedicalPatient) error
 	GetMedicalPatients(ctx context.Context, params *medical_entity.MedicalPatientParams) ([]*medical_entity.MedicalPatient, error)
+	CreateMedicalRecord(ctx context.Context, payload *medical_entity.AddMedicalRecord) error
 }

@@ -35,3 +35,10 @@ type MedicalPatientParams struct {
 	PhoneNumber    string
 	CreatedAt      string
 }
+
+type AddMedicalRecord struct {
+	IdentityNumber int    `json:"identityNumber" validate:"required,identitynumber"`
+	Symptoms       string `json:"symptoms" validate:"required,min=1,max=2000"`
+	Medications    string `json:"medications" validate:"required,min=1,max=2000"`
+	UserID         string `json:"userId" validate:"required"`
+}

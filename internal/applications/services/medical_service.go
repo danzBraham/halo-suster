@@ -42,3 +42,20 @@ func (s *MedicalService) GetMedicalPatients(ctx context.Context, params *medical
 
 	return patients, nil
 }
+
+func (s *MedicalService) CreateMedicalRecord(ctx context.Context, payload *medical_entity.AddMedicalRecord) error {
+	isIdentityNumberExists, err := s.MedicalRepository.VerifyIdentityNumber(ctx, payload.IdentityNumber)
+	if err != nil {
+		return err
+	}
+	if !isIdentityNumberExists {
+		return medical_error.ErrIdentityNumberIsNotExists
+	}
+
+	err = s.MedicalRepository.CreateMedicalRecord(ctx, payload)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
