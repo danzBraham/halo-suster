@@ -63,20 +63,20 @@ func (r *MedicalRepositoryPostgres) GetMedicalPatients(ctx context.Context, para
 	argID := 1
 
 	if params.IdentityNumber != "" {
-		query += ` AND identity_number LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
-		args = append(args, params.IdentityNumber)
+		query += ` AND identity_number LIKE $` + strconv.Itoa(argID)
+		args = append(args, "%"+params.IdentityNumber+"%")
 		argID++
 	}
 
 	if params.PhoneNumber != "" {
-		query += ` AND phone_number LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
-		args = append(args, strings.TrimPrefix(params.PhoneNumber, "+"))
+		query += ` AND phone_number LIKE $` + strconv.Itoa(argID)
+		args = append(args, "%"+strings.TrimPrefix(params.PhoneNumber, "+")+"%")
 		argID++
 	}
 
 	if params.Name != "" {
-		query += ` AND LOWER(name) LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
-		args = append(args, params.Name)
+		query += ` AND LOWER(name) LIKE $` + strconv.Itoa(argID)
+		args = append(args, "%"+params.Name+"%")
 		argID++
 	}
 
@@ -156,20 +156,20 @@ func (r *MedicalRepositoryPostgres) GetMedicalRecords(ctx context.Context, param
 	argID := 1
 
 	if params.IdentityNumber != "" {
-		query += ` AND p.identity_number LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
-		args = append(args, params.IdentityNumber)
+		query += ` AND p.identity_number LIKE $` + strconv.Itoa(argID)
+		args = append(args, "%"+params.IdentityNumber+"%")
 		argID++
 	}
 
 	if params.UserID != "" {
-		query += ` AND u.id LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
-		args = append(args, params.UserID)
+		query += ` AND u.id LIKE $` + strconv.Itoa(argID)
+		args = append(args, "%"+params.UserID+"%")
 		argID++
 	}
 
 	if params.NIP != "" {
-		query += ` AND u.nip::TEXT LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
-		args = append(args, params.NIP)
+		query += ` AND u.nip LIKE $` + strconv.Itoa(argID)
+		args = append(args, "%"+params.NIP+"%")
 		argID++
 	}
 
@@ -192,7 +192,7 @@ func (r *MedicalRepositoryPostgres) GetMedicalRecords(ctx context.Context, param
 	medicalRecords := []*medical_entity.MedicalRecord{}
 	for rows.Next() {
 		var identityNumber string
-		// var nip string
+		var nipStr string
 		var identityDetail medical_entity.IdentityDetail
 		var medicalRecord medical_entity.MedicalRecord
 		var createdByDetail medical_entity.CreatedByDetail
@@ -200,7 +200,7 @@ func (r *MedicalRepositoryPostgres) GetMedicalRecords(ctx context.Context, param
 		err := rows.Scan(
 			&identityNumber, &identityDetail.PhoneNumber, &identityDetail.Name, &identityDetail.BirthDate, &identityDetail.Gender, &identityDetail.CardImageURL,
 			&medicalRecord.Symptoms, &medicalRecord.Medications, &medicalRecord.CreatedAt,
-			&createdByDetail.NIP, &createdByDetail.Name, &createdByDetail.UserID,
+			&nipStr, &createdByDetail.Name, &createdByDetail.UserID,
 		)
 		if err != nil {
 			return nil, err
@@ -211,13 +211,13 @@ func (r *MedicalRepositoryPostgres) GetMedicalRecords(ctx context.Context, param
 			return nil, err
 		}
 
-		// nipInt, err := strconv.Atoi(nip)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		nip, err := strconv.Atoi(nipStr)
+		if err != nil {
+			return nil, err
+		}
 
 		identityDetail.IdentityNumber = identityNumberInt
-		// createdByDetail.NIP = nipInt
+		createdByDetail.NIP = nip
 
 		medicalRecord.IdentityDetail = identityDetail
 		medicalRecord.CreatedByDetail = createdByDetail
