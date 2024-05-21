@@ -3,6 +3,7 @@ package repository_postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	user_entity "github.com/danzBraham/halo-suster/internal/domains/entities/users"
@@ -21,10 +22,23 @@ func NewUserRepositoryPostgres(db *pgxpool.Pool) repositories.UserRepository {
 	return &UserRepositoryPostgres{DB: db}
 }
 
+func (r *UserRepositoryPostgres) VerifyNIP(ctx context.Context, nip int) (bool, error) {
+	var isNIPExists string
+	query := "SELECT 1 FROM users WHERE nip = $1"
+	err := r.DB.QueryRow(ctx, query, strconv.Itoa(nip)).Scan(&isNIPExists)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *UserRepositoryPostgres) CreateITUser(ctx context.Context, payload *user_entity.RegisterITUser) (userId string, err error) {
 	userId = ulid.Make().String()
 	query := "INSERT INTO users (id, nip, name, password, role) VALUES ($1, $2, $3, $4, $5)"
-	_, err = r.DB.Exec(ctx, query, userId, &payload.NIP, &payload.Name, &payload.Password, user_entity.IT)
+	_, err = r.DB.Exec(ctx, query, userId, strconv.Itoa(payload.NIP), &payload.Name, &payload.Password, user_entity.IT)
 	if err != nil {
 		return "", err
 	}
@@ -34,7 +48,7 @@ func (r *UserRepositoryPostgres) CreateITUser(ctx context.Context, payload *user
 func (r *UserRepositoryPostgres) CreateNurseUser(ctx context.Context, payload *user_entity.RegisterNurseUser) (userId string, err error) {
 	userId = ulid.Make().String()
 	query := "INSERT INTO users (id, nip, name, card_image_url, role) VALUES ($1, $2, $3, $4, $5)"
-	_, err = r.DB.Exec(ctx, query, userId, &payload.NIP, &payload.Name, &payload.CardImageURL, user_entity.Nurse)
+	_, err = r.DB.Exec(ctx, query, userId, strconv.Itoa(payload.NIP), &payload.Name, &payload.CardImageURL, user_entity.Nurse)
 	if err != nil {
 		return "", err
 	}
@@ -43,27 +57,39 @@ func (r *UserRepositoryPostgres) CreateNurseUser(ctx context.Context, payload *u
 
 func (r *UserRepositoryPostgres) GetUserByNIP(ctx context.Context, nip int) (user *user_entity.User, err error) {
 	user = &user_entity.User{}
+	var nipStr string
 	query := "SELECT id, nip, name, password, role FROM users WHERE nip = $1"
-	err = r.DB.QueryRow(ctx, query, nip).Scan(&user.ID, &user.NIP, &user.Name, &user.Password, &user.Role)
+	err = r.DB.QueryRow(ctx, query, strconv.Itoa(nip)).Scan(&user.ID, &nipStr, &user.Name, &user.Password, &user.Role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, user_error.ErrUserNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
+	nip, err = strconv.Atoi(nipStr)
+	if err != nil {
+		return nil, err
+	}
+	user.NIP = nip
 	return user, nil
 }
 
 func (r *UserRepositoryPostgres) GetUserByID(ctx context.Context, id string) (user *user_entity.User, err error) {
 	user = &user_entity.User{}
+	var nipStr string
 	query := "SELECT id, nip, name, role FROM users WHERE id = $1"
-	err = r.DB.QueryRow(ctx, query, id).Scan(&user.ID, &user.NIP, &user.Name, &user.Role)
+	err = r.DB.QueryRow(ctx, query, id).Scan(&user.ID, &nipStr, &user.Name, &user.Role)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, user_error.ErrUserNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
+	nip, err := strconv.Atoi(nipStr)
+	if err != nil {
+		return nil, err
+	}
+	user.NIP = nip
 	return user, nil
 }
 
@@ -79,14 +105,14 @@ func (r *UserRepositoryPostgres) GetUsers(ctx context.Context, params *user_enti
 	}
 
 	if params.NIP != "" {
-		query += ` AND nip::VARCHAR LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
-		args = append(args, params.NIP)
+		query += ` AND nip LIKE $` + strconv.Itoa(argID)
+		args = append(args, "%"+params.NIP+"%")
 		argID++
 	}
 
 	if params.Name != "" {
-		query += ` AND LOWER(name) LIKE '%' || $` + strconv.Itoa(argID) + ` || '%'`
-		args = append(args, params.Name)
+		query += ` AND LOWER(name) LIKE $` + strconv.Itoa(argID)
+		args = append(args, "%"+params.Name+"%")
 		argID++
 	}
 
@@ -106,6 +132,7 @@ func (r *UserRepositoryPostgres) GetUsers(ctx context.Context, params *user_enti
 
 	query += " LIMIT $" + strconv.Itoa(argID) + " OFFSET $" + strconv.Itoa(argID+1)
 	args = append(args, params.Limit, params.Offset)
+	fmt.Println(query)
 
 	rows, err := r.DB.Query(ctx, query, args...)
 	if err != nil {
@@ -116,31 +143,24 @@ func (r *UserRepositoryPostgres) GetUsers(ctx context.Context, params *user_enti
 	users := []*user_entity.UserList{}
 	for rows.Next() {
 		var user user_entity.UserList
-		if err := rows.Scan(&user.ID, &user.NIP, &user.Name, &user.CreatedAt); err != nil {
+		var nipStr string
+		if err := rows.Scan(&user.ID, &nipStr, &user.Name, &user.CreatedAt); err != nil {
 			return nil, err
 		}
+		nip, err := strconv.Atoi(nipStr)
+		if err != nil {
+			return nil, err
+		}
+		user.NIP = nip
 		users = append(users, &user)
 	}
 
 	return users, nil
 }
 
-func (r *UserRepositoryPostgres) VerifyNIP(ctx context.Context, nip int) (bool, error) {
-	var isNIPExists int
-	query := "SELECT 1 FROM users WHERE nip = $1"
-	err := r.DB.QueryRow(ctx, query, nip).Scan(&isNIPExists)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
 func (r *UserRepositoryPostgres) UpdateNurseUser(ctx context.Context, payload *user_entity.UpdateNurseUser) error {
 	query := "UPDATE users SET nip = $1, name = $2 WHERE id = $3"
-	_, err := r.DB.Exec(ctx, query, &payload.NIP, &payload.Name, &payload.UserID)
+	_, err := r.DB.Exec(ctx, query, strconv.Itoa(payload.NIP), &payload.Name, &payload.UserID)
 	if err != nil {
 		return err
 	}
