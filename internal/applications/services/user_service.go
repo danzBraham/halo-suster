@@ -125,17 +125,17 @@ func (s *UserService) GetUsers(ctx context.Context, params *user_entity.UserQuer
 }
 
 func (s *UserService) UpdateNurseUser(ctx context.Context, payload *user_entity.UpdateNurseUser) error {
+	currentUser, err := s.UserRepository.GetUserByID(ctx, payload.UserID)
+	if err != nil {
+		return err
+	}
+
 	isNIPExists, err := s.UserRepository.VerifyNIP(ctx, payload.NIP)
 	if err != nil {
 		return err
 	}
-	if isNIPExists {
+	if isNIPExists && payload.NIP != currentUser.NIP {
 		return user_error.ErrNIPAlreadyExists
-	}
-
-	currentUser, err := s.UserRepository.GetUserByID(ctx, payload.UserID)
-	if err != nil {
-		return err
 	}
 
 	if strconv.Itoa(currentUser.NIP)[:3] != "303" {
