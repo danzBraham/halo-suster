@@ -13,9 +13,9 @@ type AddMedicalPatient struct {
 	IdentityNumber int    `json:"identityNumber" validate:"required,identitynumber"`
 	PhoneNumber    string `json:"phoneNumber" validate:"required,min=10,max=15,startswith=+62"`
 	Name           string `json:"name" validate:"required,min=3,max=30"`
-	BirthDate      string `json:"birthDate" validate:"required,datetime=2006-01-02"`
+	BirthDate      string `json:"birthDate" validate:"required,iso8601date"`
 	Gender         Gender `json:"gender" validate:"required,oneof=male female"`
-	CardImageURL   string `json:"identityCardScanImg" validate:"required,url"`
+	CardImageURL   string `json:"identityCardScanImg" validate:"required,imageurl"`
 }
 
 type MedicalPatient struct {

@@ -15,6 +15,7 @@ func NewValidate() {
 	validate.RegisterValidation("nip", validateUserNIP)
 	validate.RegisterValidation("identitynumber", validateIdentityNumber)
 	validate.RegisterValidation("imageurl", validateImageURL)
+	validate.RegisterValidation("iso8601date", validateISO8601Date)
 }
 
 func ValidatePayload(payload interface{}) error {
@@ -93,4 +94,9 @@ func validateImageURL(fl validator.FieldLevel) bool {
 	}
 
 	return true
+}
+
+func validateISO8601Date(fl validator.FieldLevel) bool {
+	_, err := time.Parse(time.RFC3339, fl.Field().String())
+	return err == nil
 }
