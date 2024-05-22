@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"net/url"
+	"path"
 	"strconv"
 	"time"
 
@@ -12,6 +14,7 @@ var validate = validator.New(validator.WithRequiredStructEnabled())
 func NewValidate() {
 	validate.RegisterValidation("nip", validateUserNIP)
 	validate.RegisterValidation("identitynumber", validateIdentityNumber)
+	validate.RegisterValidation("imageurl", validateImageURL)
 }
 
 func ValidatePayload(payload interface{}) error {
@@ -68,4 +71,26 @@ func validateIdentityNumber(fl validator.FieldLevel) bool {
 	identityNumber := fl.Field().Int()
 	identityNumberStr := strconv.Itoa(int(identityNumber))
 	return len(identityNumberStr) == 16
+}
+
+func validateImageURL(fl validator.FieldLevel) bool {
+	u, err := url.ParseRequestURI(fl.Field().String())
+	if err != nil {
+		return false
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return false
+	}
+
+	if u.Host == "" {
+		return false
+	}
+
+	ext := path.Ext(u.Path)
+	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+		return false
+	}
+
+	return true
 }

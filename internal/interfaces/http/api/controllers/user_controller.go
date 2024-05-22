@@ -210,6 +210,13 @@ func (c *UserController) handleLoginITUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	user, err := c.Service.LoginUser(r.Context(), payload)
+	if errors.Is(err, user_error.ErrNIPIsNotExists) {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Error:   "Not found error",
+			Message: err.Error(),
+		})
+		return
+	}
 	if errors.Is(err, user_error.ErrInvalidPassword) {
 		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
 			Error:   "Bad request error",
@@ -239,7 +246,7 @@ func (c *UserController) handleLoginITUser(w http.ResponseWriter, r *http.Reques
 	}
 	http.SetCookie(w, cookie)
 
-	helpers.ResponseJSON(w, http.StatusCreated, &helpers.ResponseBody{
+	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
 		Message: "User successfully login",
 		Data:    user,
 	})
@@ -282,6 +289,13 @@ func (c *UserController) handleLoginNurseUser(w http.ResponseWriter, r *http.Req
 		})
 		return
 	}
+	if errors.Is(err, user_error.ErrNIPIsNotExists) {
+		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
+			Error:   "Not found error",
+			Message: err.Error(),
+		})
+		return
+	}
 	if errors.Is(err, user_error.ErrUserNotFound) {
 		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
 			Error:   "Not found error",
@@ -304,7 +318,7 @@ func (c *UserController) handleLoginNurseUser(w http.ResponseWriter, r *http.Req
 	}
 	http.SetCookie(w, cookie)
 
-	helpers.ResponseJSON(w, http.StatusCreated, &helpers.ResponseBody{
+	helpers.ResponseJSON(w, http.StatusOK, &helpers.ResponseBody{
 		Message: "User successfully login",
 		Data:    user,
 	})
@@ -411,29 +425,8 @@ func (c *UserController) handleUpdateNurseUser(w http.ResponseWriter, r *http.Re
 
 func (c *UserController) handleDeleteNurseUser(w http.ResponseWriter, r *http.Request) {
 	userId := chi.URLParam(r, "userId")
-	payload := &user_entity.UpdateNurseUser{
-		UserID: userId,
-	}
 
-	err := helpers.DecodeJSON(r, payload)
-	if err != nil {
-		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
-			Error:   err.Error(),
-			Message: "Failed to decode JSON",
-		})
-		return
-	}
-
-	err = helpers.ValidatePayload(payload)
-	if err != nil {
-		helpers.ResponseJSON(w, http.StatusBadRequest, &helpers.ResponseBody{
-			Error:   err.Error(),
-			Message: "Request doesn’t pass validation",
-		})
-		return
-	}
-
-	err = c.Service.DeleteNurseUser(r.Context(), userId)
+	err := c.Service.DeleteNurseUser(r.Context(), userId)
 	if errors.Is(err, user_error.ErrUserNotFound) {
 		helpers.ResponseJSON(w, http.StatusNotFound, &helpers.ResponseBody{
 			Error:   "Not found error",
